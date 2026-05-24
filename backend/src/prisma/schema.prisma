@@ -1,0 +1,83 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id           String        @id @default(uuid())
+  email        String        @unique
+  passwordHash String
+  name         String
+  role         String        @default("USER") // "USER" or "ADMIN"
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  leads        Lead[]
+  searches     Search[]
+  settings     Setting?
+  apiUsages    ApiUsage[]
+}
+
+model Lead {
+  id              String      @id @default(uuid())
+  name            String
+  channelId       String      @unique
+  platform        String      @default("YOUTUBE") // "YOUTUBE", "INSTAGRAM"
+  url             String
+  email           String?
+  subscriberCount Int         @default(0)
+  averageViews    Int         @default(0)
+  uploadFrequency Float       @default(0.0) // videos per week
+  engagementScore Float       @default(0.0)
+  qualityScore    String      @default("LOW") // "HIGH", "MEDIUM", "LOW"
+  scoreReason     String
+  outreachStatus  String      @default("NOT_CONTACTED") // "NOT_CONTACTED", "CONTACTED", "REPLIED", "CLOSED"
+  recentVideos    String      // Serialized JSON array of recent videos
+  socialLinks     String      // Serialized JSON object for social links
+  userId          String
+  user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  searchId        String?
+  search          Search?     @relation(fields: [searchId], references: [id], onDelete: SetNull)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+}
+
+model Search {
+  id        String   @id @default(uuid())
+  keyword   String
+  niche     String?
+  platform  String   @default("YOUTUBE")
+  filters   String   // Serialized JSON of subscriber count ranges, etc.
+  status    String   @default("COMPLETED") // "RUNNING", "COMPLETED", "FAILED"
+  runCount  Int      @default(0)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  leads     Lead[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Setting {
+  id             String   @id @default(uuid())
+  userId         String   @unique
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  youtubeApiKey  String?
+  openaiApiKey   String?
+  mockScraper    Boolean  @default(true)
+  theme          String   @default("dark")
+  emailTemplate  String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model ApiUsage {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  action    String // "SCRAPE_JOB", "AI_EMAIL_GENERATE"
+  details   String?
+  createdAt DateTime @default(now())
+}
