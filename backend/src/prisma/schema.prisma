@@ -1,5 +1,5 @@
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -33,10 +33,10 @@ model Lead {
   uploadFrequency Float       @default(0.0) // videos per week
   engagementScore Float       @default(0.0)
   qualityScore    String      @default("LOW") // "HIGH", "MEDIUM", "LOW"
-  scoreReason     String
+  scoreReason     String      @db.Text
   outreachStatus  String      @default("NOT_CONTACTED") // "NOT_CONTACTED", "CONTACTED", "REPLIED", "CLOSED"
-  recentVideos    String      // Serialized JSON array of recent videos
-  socialLinks     String      // Serialized JSON object for social links
+  recentVideos    String      @db.Text // Serialized JSON array of recent videos
+  socialLinks     String      @db.Text // Serialized JSON object for social links
   userId          String
   user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   searchId        String?
@@ -50,7 +50,7 @@ model Search {
   keyword   String
   niche     String?
   platform  String   @default("YOUTUBE")
-  filters   String   // Serialized JSON of subscriber count ranges, etc.
+  filters   String   @db.Text // Serialized JSON of subscriber count ranges, etc.
   status    String   @default("COMPLETED") // "RUNNING", "COMPLETED", "FAILED"
   runCount  Int      @default(0)
   userId    String
@@ -68,7 +68,7 @@ model Setting {
   openaiApiKey   String?
   mockScraper    Boolean  @default(true)
   theme          String   @default("dark")
-  emailTemplate  String?
+  emailTemplate  String?  @db.Text
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 }
